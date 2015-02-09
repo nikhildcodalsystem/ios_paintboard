@@ -11,7 +11,7 @@
 
 
 
-@interface ViewController () <UIActionSheetDelegate>{
+@interface ViewController () <UIActionSheetDelegate, UIImagePickerControllerDelegate>{
     
     CGPoint lastPoint;
     CGFloat red;
@@ -97,7 +97,17 @@
 }
 
 -(void)didPressResetButton:(id)sender{
-    self.mainImage.image = nil;
+    //self.mainImage.image = nil;
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@""
+                                                             delegate:self
+                                                    cancelButtonTitle:nil
+                                               destructiveButtonTitle:nil
+                                                    otherButtonTitles:@"Reset to white board",
+                                                                        @"Reset background from album",
+                                                                        @"Take a photo as background",
+                                                                        @"Cancel", nil];
+    actionSheet.tag = 1001;
+    [actionSheet showInView:self.view];
 }
 
 -(void)didPressSaveButton:(id)sender{
@@ -106,6 +116,7 @@
                                                     cancelButtonTitle:nil
                                                destructiveButtonTitle:nil
                                                     otherButtonTitles:@"Save to Camera Roll", @"Cancel", nil];
+    actionSheet.tag = 1002;
     [actionSheet showInView:self.view];
 }
 
@@ -360,13 +371,39 @@
 
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    if (buttonIndex == 0)
-    {
-        UIGraphicsBeginImageContextWithOptions(self.mainImage.bounds.size, NO,0.0);
-        [self.mainImage.image drawInRect:CGRectMake(0, 0, self.mainImage.frame.size.width, self.mainImage.frame.size.height)];
-        UIImage *SaveImage = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-        UIImageWriteToSavedPhotosAlbum(SaveImage, self,@selector(image:didFinishSavingWithError:contextInfo:), nil);
+    if(actionSheet.tag == 1001){
+        UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+        
+        picker.delegate = self;
+        
+        if(buttonIndex == 0){
+            self.mainImage.image = nil;
+
+        }
+        else if(buttonIndex == 1){
+            picker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
+            NSLog(@"pressed photo");
+            [self presentViewController:picker animated:YES completion:nil];
+
+        }
+        
+        else if(buttonIndex == 2){
+            picker.sourceType = UIImagePickerControllerSourceTypeCamera;
+            NSLog(@"pressed camera");
+            [self presentViewController:picker animated:YES completion:nil];
+
+        }
+    
+    }
+    else if(actionSheet.tag == 1002){
+        if (buttonIndex == 0)
+        {
+            UIGraphicsBeginImageContextWithOptions(self.mainImage.bounds.size, NO,0.0);
+            [self.mainImage.image drawInRect:CGRectMake(0, 0, self.mainImage.frame.size.width, self.mainImage.frame.size.height)];
+            UIImage *SaveImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            UIImageWriteToSavedPhotosAlbum(SaveImage, self,@selector(image:didFinishSavingWithError:contextInfo:), nil);
+        }
     }
 }
 
@@ -382,5 +419,25 @@
         [alert show];
     }
 }
+
+#pragma mark - UIImagePickerControllerDelegate
+-(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
+{
+    NSLog(@"Pressed use photo button");
+    UIImage *image = info[UIImagePickerControllerEditedImage];
+    
+    if (!image) image = info[UIImagePickerControllerOriginalImage];
+
+    self.mainImage.image = image;
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+-(void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
+{
+    NSLog(@"Pressed cancel button");
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+
 
 @end
