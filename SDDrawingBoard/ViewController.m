@@ -8,10 +8,11 @@
 
 #import "ViewController.h"
 #import "SettingsViewController.h"
+#import <MessageUI/MessageUI.h>
 
 
 
-@interface ViewController () <UIActionSheetDelegate, UIImagePickerControllerDelegate>{
+@interface ViewController () <UIActionSheetDelegate, UIImagePickerControllerDelegate, MFMailComposeViewControllerDelegate>{
     
     CGPoint lastPoint;
     CGFloat red;
@@ -103,9 +104,9 @@
                                                     cancelButtonTitle:nil
                                                destructiveButtonTitle:nil
                                                     otherButtonTitles:@"Reset to white board",
-                                                                        @"Reset background from album",
-                                                                        @"Take a photo as background",
-                                                                        @"Cancel", nil];
+                                                                      @"Reset background from album",
+                                                                      @"Take a photo as background",
+                                                                      @"Cancel", nil];
     actionSheet.tag = 1001;
     [actionSheet showInView:self.view];
 }
@@ -115,7 +116,11 @@
                                                              delegate:self
                                                     cancelButtonTitle:nil
                                                destructiveButtonTitle:nil
-                                                    otherButtonTitles:@"Save to Camera Roll", @"Cancel", nil];
+                                                    otherButtonTitles:@"Save to Camera Roll",
+                                                                      @"Send to Message",
+                                                                      @"Send to Email",
+                                                                      @"Cancel",
+                                                                      nil];
     actionSheet.tag = 1002;
     [actionSheet showInView:self.view];
 }
@@ -404,6 +409,14 @@
             UIGraphicsEndImageContext();
             UIImageWriteToSavedPhotosAlbum(SaveImage, self,@selector(image:didFinishSavingWithError:contextInfo:), nil);
         }
+        else if (buttonIndex == 1)
+        {
+            [self sendMsg];
+        }
+        else if (buttonIndex == 2)
+        {
+            [self sendEmail];
+        }
     }
 }
 
@@ -438,6 +451,75 @@
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (void)sendMsg{
+    MFMessageComposeViewController *messageController = [[MFMessageComposeViewController alloc] init];
+    messageController.messageComposeDelegate = self;
+    
+    NSData *imgData = UIImageJPEGRepresentation(self.mainImage.image, 0.0);
+    BOOL didAttachImage = [messageController addAttachmentData:imgData typeIdentifier:@"public.data"  filename:@"image.jpg"];
+    
+    
+    if (didAttachImage)
+    {
+        // Present message view controller on screen
+        [self presentViewController:messageController animated:YES completion:nil];
+    }
+    else
+    {
+        UIAlertView *warningAlert = [[UIAlertView alloc] initWithTitle:@"Error"
+                                                               message:@"Failed to attach image"
+                                                              delegate:nil
+                                                     cancelButtonTitle:@"OK"
+                                                     otherButtonTitles:nil];
+        [warningAlert show];
+        return;
+    }
+}
+
+- (void)sendEmail{
+    
+    NSString *emailTitle = @"";
+    NSString *messageBody = @"";
+    NSArray *toRecipents = [NSArray arrayWithObject:@""];
+    
+    MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
+    mc.mailComposeDelegate = self;
+    [mc setSubject:emailTitle];
+    [mc setMessageBody:messageBody isHTML:NO];
+    [mc setToRecipients:toRecipents];
+
+    NSData *imgData = UIImageJPEGRepresentation(self.mainImage.image, 0.0);
+    // Add attachment
+    [mc addAttachmentData:imgData mimeType:@"image/jpeg" fileName:@"image.img"];
+    
+    // Present mail view controller on screen
+    [self presentViewController:mc animated:YES completion:NULL];
+    
+}
+
+- (void) mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
+{
+    switch (result)
+    {
+        case MFMailComposeResultCancelled:
+            NSLog(@"Mail cancelled");
+            break;
+        case MFMailComposeResultSaved:
+            NSLog(@"Mail saved");
+            break;
+        case MFMailComposeResultSent:
+            NSLog(@"Mail sent");
+            break;
+        case MFMailComposeResultFailed:
+            NSLog(@"Mail sent failure: %@", [error localizedDescription]);
+            break;
+        default:
+            break;
+    }
+    
+    // Close the Mail Interface
+    [self dismissViewControllerAnimated:YES completion:NULL];
+}
 
 
 @end
