@@ -8,15 +8,14 @@ Author: Shen Dong
 2. Adjust brush sizes
 3. Adjust brush colors
 4. Preview selection
-5. Reset image background to white board, or from album or camera
+5. undo, redo and reset
 6. Send email or message with drawing picture
+7. Load saved pictures from album, or from camera
 
 # TODO
 
-1. Command patten for redo/undo
-2. Collaborative editing
-3. Load saved pictures
-4. Add camera filters to edit pictures
+1. Collaborative editing
+2. Add camera filters to edit pictures
 
 ![](./drawingBoard_demo.gif)
 
