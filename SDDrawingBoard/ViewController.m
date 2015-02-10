@@ -474,6 +474,23 @@
         [warningAlert show];
         return;
     }
+    
+    [self dismissViewControllerAnimated:YES completion:NULL];
+
+}
+
+-(void)messageComposeViewController:(MFMessageComposeViewController *)controller didFinishWithResult:(MessageComposeResult)result
+{
+    
+    if (result == MessageComposeResultCancelled)
+        NSLog(@"Message cancelled");
+    else if (result == MessageComposeResultSent)
+        NSLog(@"Message sent");
+    else
+        NSLog(@"Message failed");
+    
+    [self dismissViewControllerAnimated:YES completion:NULL];
+
 }
 
 - (void)sendEmail{
