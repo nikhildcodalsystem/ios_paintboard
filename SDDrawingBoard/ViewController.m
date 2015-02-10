@@ -24,6 +24,8 @@
 }
 @property (strong, nonatomic) UIImageView *mainImage;;
 @property (strong, nonatomic) UIImageView *tempDrawImage;
+@property (strong, nonatomic) NSMutableArray * undoImagesList;
+@property (strong, nonatomic) NSMutableArray * redoImagesList;
 
 @end
 
@@ -46,9 +48,77 @@
     return _tempDrawImage;
 }
 
+-(NSMutableArray *)undoImagesList{
+    if(!_undoImagesList){
+        _undoImagesList = [[NSMutableArray alloc]initWithCapacity:50];
+    }
+    return _undoImagesList;
+}
+-(NSMutableArray *)redoImagesList{
+    if(!_redoImagesList){
+        _redoImagesList = [[NSMutableArray alloc]initWithCapacity:50];
+    }
+    return _redoImagesList;
+}
+
+-(void) resetUndoAndRedoImageList{
+    [self.redoImagesList removeAllObjects];
+    [self.undoImagesList removeAllObjects];
+}
+
+-(void) resetUndoImageList{
+    [self.undoImagesList removeAllObjects];
+}
+
+-(void) resetRedoImageList{
+    [self.redoImagesList removeAllObjects];
+}
+
+-(void) addToUndoImageList:(UIImage *)newBackGroundImg{
+    if(newBackGroundImg){
+        if([self.undoImagesList count] == 50){
+            [self.undoImagesList removeObjectAtIndex:0];
+        }
+        [self.undoImagesList addObject:newBackGroundImg];
+    }
+
+}
+
+-(void) addToRedoImageList:(UIImage *)newBackGroundImg{
+    if(newBackGroundImg){
+        if([self.redoImagesList count] == 50){
+            [self.redoImagesList removeObjectAtIndex:0];
+        }
+        [self.redoImagesList addObject:newBackGroundImg];
+
+    }
+}
+
+
+-(void) didPressUndoButton:(id)sender{
+    UIImage * lastBackgroundImg =  (UIImage *)[self.undoImagesList lastObject];
+    if(lastBackgroundImg){
+        [self addToRedoImageList:self.mainImage.image];
+        self.mainImage.image = lastBackgroundImg;
+        [self.undoImagesList removeLastObject];
+    }
+    else{
+        self.mainImage.image = nil;
+    }
+}
+
+-(void) didPressRedoButton:(id)sender{
+    UIImage * lastBackgroundImg =  (UIImage *)[self.redoImagesList lastObject];
+    if(lastBackgroundImg){
+        [self addToUndoImageList:self.mainImage.image];
+        self.mainImage.image = lastBackgroundImg;
+        [self.redoImagesList removeLastObject];
+    }
+}
+
 -(void)initResetAndSaveButton{
     UIButton *resetButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    resetButton.frame = CGRectMake(self.view.frame.size.width/10, self.view.frame.size.height*0.35/10,
+    resetButton.frame = CGRectMake(self.view.frame.size.width*2.1/10, self.view.frame.size.height*0.35/10,
                                         self.view.frame.size.height*1.2/10, self.view.frame.size.width*1/10);
     [resetButton setTitle:@"Reset" forState:UIControlStateNormal];
     resetButton.backgroundColor = [UIColor colorWithRed: 0/255.0 green: 117/255.0 blue:94.0/255.0 alpha: 1.0];
@@ -72,7 +142,7 @@
     [self.view addSubview:settingButton];
     
     UIButton* saveButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
-    saveButton.frame = CGRectMake(self.view.frame.size.width*6.5/10, self.view.frame.size.height*0.35/10,
+    saveButton.frame = CGRectMake(self.view.frame.size.width*6.0/10, self.view.frame.size.height*0.35/10,
                                          self.view.frame.size.height*1.2/10, self.view.frame.size.width*1/10);
     [saveButton setTitle:@"Save" forState:UIControlStateNormal];
     saveButton.backgroundColor = [UIColor colorWithRed: 0/255.0 green: 117/255.0 blue:94.0/255.0 alpha: 1.0];
@@ -86,6 +156,43 @@
     saveButton.titleLabel.font = [UIFont systemFontOfSize:22];
     [saveButton addTarget:self  action:@selector(didPressSaveButton:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:saveButton];
+    
+    
+    UIButton *undoButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    undoButton.frame = CGRectMake(self.view.frame.size.width*0.1/10, self.view.frame.size.height*0.35/10,
+                                   self.view.frame.size.height*1.2/10, self.view.frame.size.width*1/10);
+    [undoButton setTitle:@"Undo" forState:UIControlStateNormal];
+    undoButton.backgroundColor = [UIColor colorWithRed: 0/255.0 green: 117/255.0 blue:94.0/255.0 alpha: 1.0];
+    [undoButton setTintColor:[UIColor whiteColor]];
+    
+    undoButton.backgroundColor = [UIColor clearColor];
+    [undoButton setTintColor:[UIColor colorWithRed: 0/255.0 green: 117/255.0 blue:94.0/255.0 alpha: 1.0]];
+    
+    undoButton.layer.cornerRadius = 10;
+    undoButton.layer.masksToBounds = YES;
+    undoButton.titleLabel.font = [UIFont systemFontOfSize:22];
+    [undoButton addTarget:self  action:@selector(didPressUndoButton:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:undoButton];
+    
+    
+    UIButton* redoButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    redoButton.frame = CGRectMake(self.view.frame.size.width*8/10, self.view.frame.size.height*0.35/10,
+                                  self.view.frame.size.height*1.2/10, self.view.frame.size.width*1/10);
+    [redoButton setTitle:@"Redo" forState:UIControlStateNormal];
+    redoButton.backgroundColor = [UIColor colorWithRed: 0/255.0 green: 117/255.0 blue:94.0/255.0 alpha: 1.0];
+    [redoButton setTintColor:[UIColor whiteColor]];
+    
+    redoButton.backgroundColor = [UIColor clearColor];
+    [redoButton setTintColor:[UIColor colorWithRed: 0/255.0 green: 117/255.0 blue:94.0/255.0 alpha: 1.0]];
+    
+    redoButton.layer.cornerRadius = 10;
+    redoButton.layer.masksToBounds = YES;
+    redoButton.titleLabel.font = [UIFont systemFontOfSize:22];
+    [redoButton addTarget:self  action:@selector(didPressRedoButton:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:redoButton];
+    
+    [self addToUndoImageList:self.mainImage.image];
+    [self resetRedoImageList];
 }
 
 
@@ -98,7 +205,6 @@
 }
 
 -(void)didPressResetButton:(id)sender{
-    //self.mainImage.image = nil;
     UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@""
                                                              delegate:self
                                                     cancelButtonTitle:nil
@@ -138,7 +244,6 @@
                action:@selector(pencilPressed:)
      forControlEvents:UIControlEventTouchUpInside];
     [button setTitle:@"E" forState:UIControlStateNormal];
-    //button.frame = CGRectMake(80.0, 210.0, 160.0, 40.0);
     CGFloat buttonX = 10 * screenWidth / 12;
     CGFloat buttonY = 12 * screenHeight / 13;
     CGFloat buttonWidth = 2* screenWidth/12;
@@ -155,7 +260,6 @@
 
 -(void)initPaintPencil{
     
-    //CGRect screenRect = [[UIScreen mainScreen] bounds];
     CGRect screenRect = [self.view bounds];
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
@@ -343,8 +447,14 @@
         UIGraphicsEndImageContext();
     }
     
+  
+    
     UIGraphicsBeginImageContext(self.mainImage.frame.size);
     [self.mainImage.image drawInRect:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height) blendMode:kCGBlendModeNormal alpha:1.0];
+    
+    [self addToUndoImageList:self.mainImage.image];
+    [self resetRedoImageList];
+    
     [self.tempDrawImage.image drawInRect:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height) blendMode:kCGBlendModeNormal alpha:opacity];
     self.mainImage.image = UIGraphicsGetImageFromCurrentImageContext();
     self.tempDrawImage.image = nil;
@@ -383,7 +493,6 @@
         
         if(buttonIndex == 0){
             self.mainImage.image = nil;
-
         }
         else if(buttonIndex == 1){
             picker.sourceType = UIImagePickerControllerSourceTypeSavedPhotosAlbum;
